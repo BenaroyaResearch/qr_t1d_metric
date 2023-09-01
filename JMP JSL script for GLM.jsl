@@ -1,0 +1,71 @@
+/* JMP script to fit generalized linear model 
+   to evaluate responder defns association with baseline metrics
+   where model is 
+   Binary Responder (QR>=0) = Baseline Age + Baseline C-Peptide */
+
+Fit Model(
+	Y( :"Responder (QR >=0)"n ),
+	Effects(
+		:"Baseline Age (years)"n, :"Baseline C-peptide AUC Mean (nmol/L) ln(x+1)"n
+	),
+	Personality( "Generalized Linear Model" ),
+	History(
+		Effects(
+			:Active Treatment or Placebo Group, :"Baseline Age (years)"n,
+			:"Baseline C-peptide AUC Mean (nmol/L) ln(x+1)"n
+		)
+	),
+	GLM Distribution( "Binomial" ),
+	Link Function( "Logit" ),
+	Overdispersion Tests and Intervals( 0 ),
+	"Firth Bias-Adjusted Estimates"n( 0 ),
+	Run(
+		1,
+		Profiler(
+			1,
+			Confidence Intervals( 1 ),
+			Term Value(
+				"Baseline Age (years)"n( 16.435, Lock( 0 ), Show( 1 ) ),
+				"Baseline C-peptide AUC Mean (nmol/L) ln(x+1)"n(
+					0.5294,
+					Lock( 0 ),
+					Show( 1 )
+				)
+			)
+		)
+	),
+	Local Data Filter(
+		Add Filter(
+			columns( :Active Treatment or Placebo Group ),
+			Where( :Active Treatment or Placebo Group == "Placebo" )
+		)
+	)
+);
+
+
+/* JMP script to fit generalized linear model to determine QR
+   association with treatment group where model is
+   Treatment group = QR; 
+   and weighted so that active and placebo participants
+   were equally represented in producing the probability curve. 
+   For example if proportion placebo = 0.6 and proportion active = 0.4
+   then weight for placebo = 1 and weight for active = 0.6/0.4 = 1.5 */
+Fit Model(
+	Weight( :Weight ),
+	Y( :Active Treatment or Placebo Group ),
+	Effects( :QR ),
+	Personality( "Generalized Linear Model" ),
+	GLM Distribution( "Binomial" ),
+	Link Function( "Logit" ),
+	Overdispersion Tests and Intervals( 0 ),
+	"Firth Bias-Adjusted Estimates"n( 0 ),
+	Run(
+		1,
+		Profiler(
+			1,
+			Confidence Intervals( 1 ),
+			Term Value( QR( 0.0305, Lock( 0 ), Show( 1 ) ) )
+		)
+	)
+);
+
